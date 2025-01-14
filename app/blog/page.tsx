@@ -1,45 +1,51 @@
-'use client'
+import Link from 'next/link'
+import fs from 'fs'
+import path from 'path'
+import matter from 'gray-matter'
 
-import { useEffect, useState } from 'react'
-import BlogPostPreview from '@/components/BlogPostPreview'
-
-interface Post {
+interface BlogPost {
   slug: string
   title: string
-  category: string
-  summary: string
-  thumbnail: string
   date: string
+  category: string
+  rating: number
 }
 
-export default function Blog() {
-  const [posts, setPosts] = useState<Post[]>([])
-
-  useEffect(() => {
-    async function fetchPosts() {
-      const res = await fetch('/api/posts')
-      const data = await res.json()
-      setPosts(data)
+function getPosts(): BlogPost[] {
+  const postsDirectory = path.join(process.cwd(), 'posts')
+  const fileNames = fs.readdirSync(postsDirectory)
+  return fileNames.map((fileName) => {
+    const fullPath = path.join(postsDirectory, fileName)
+    const fileContents = fs.readFileSync(fullPath, 'utf8')
+    const { data } = matter(fileContents)
+    return {
+      slug: fileName.replace(/\.md$/, ''),
+      title: data.title,
+      date: data.date,
+      category: data.category,
+      rating: data.rating || 0,
     }
-    fetchPosts()
-  }, [])
+  })
+}
+
+export default function BlogPage() {
+  const posts = getPosts()
 
   return (
-    <div>
-      <h1 className="text-4xl font-bold mb-8">Blog</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Blog Posts</h1>
+      <ul className="space-y-4">
         {posts.map((post) => (
-          <BlogPostPreview
-            key={post.slug}
-            title={post.title}
-            category={post.category}
-            summary={post.summary || ''}
-            imageUrl={post.thumbnail}
-            link={`/blog/${post.slug}`}
-            date={post.date}
-          />
+          <li key={post.slug} className="border-b pb-4">
+            <Link href={`/blog/${post.slug}`} className="text-xl font-semibold hover:underline">
+              {post.title}
+            </Link>
+            <p className="text-gray-600 mt-1">
+              {post.category} • {post.date} • Independence Rating: {post.rating}/5
+            </p>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   )
 }

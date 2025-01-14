@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
@@ -15,8 +16,6 @@ export async function GET() {
     }
   })
 
-  return new Response(JSON.stringify(posts), {
-    headers: { 'Content-Type': 'application/json' },
-  })
+  return NextResponse.json(posts)
 }
 
